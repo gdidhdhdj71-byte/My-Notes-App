@@ -1,1 +1,45 @@
+name: Build Samsung Notes Clone APK
 
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up NodeJS
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Cordova and Create Project
+      run: |
+        npm install -g cordova
+        cordova create samsung-notes com.samsungnotes.clone SamsungNotes
+        cd samsung-notes
+        cordova platform add android
+        rm -rf www/*
+        cp ../index.html www/
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Build Android APK
+      run: |
+        cd samsung-notes
+        cordova build android --device
+
+    - name: Upload Premium Notes APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Samsung-Notes-Clone-APK
+        path: samsung-notes/platforms/android/app/build/outputs/apk/debug/*.apk
