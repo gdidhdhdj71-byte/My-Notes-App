@@ -3,18 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Notes App</title>
+    <title>My Photo Notes App</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         h2 { text-align: center; color: #333; margin-top: 0; font-size: 24px; }
-        textarea { width: 100%; height: 120px; padding: 12px; border-radius: 10px; border: 1px solid #ccd0d5; box-sizing: border-box; resize: none; font-size: 16px; margin-bottom: 10px; }
+        textarea { width: 100%; height: 100px; padding: 12px; border-radius: 10px; border: 1px solid #ccd0d5; box-sizing: border-box; resize: none; font-size: 16px; margin-bottom: 10px; }
         textarea:focus { border-color: #1877f2; outline: none; }
+        
+        /* Photo Input Styling */
+        .file-input-wrapper { margin-bottom: 15px; }
+        .file-label { display: block; text-align: center; padding: 10px; background-color: #e4e6eb; color: #4b4b4b; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .file-label:hover { background-color: #d8dadf; }
+        #imageInput { display: none; }
+        #preview { width: 100%; max-height: 150px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; display: none; }
+
         .save-btn { width: 100%; padding: 12px; background-color: #00a884; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .save-btn:hover { background-color: #008f72; }
         .notes-list { margin-top: 25px; }
         .note-item { background: #fffde7; padding: 15px; margin-bottom: 12px; border-left: 5px solid #ffb300; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .note-text { font-size: 16px; color: #333; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 10px; }
+        .note-img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; display: block; }
         .delete-btn { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; border-radius: 6px; cursor: pointer; padding: 6px 12px; font-size: 14px; font-weight: bold; width: 100%; display: block; text-align: center; box-sizing: border-box; transition: 0.2s; }
         .delete-btn:hover { background: #ef9a9a; }
     </style>
@@ -22,8 +31,15 @@
 <body>
 
 <div class="container">
-    <h2>📝 ମୋର ନୋଟ୍ ଆପ୍</h2>
+    <h2>📝 ଫଟୋ ଏବଂ ନୋଟ୍ ଆପ୍</h2>
     <textarea id="noteInput" placeholder="ଏଠାରେ ଆପଣଙ୍କର ନୋଟ୍ ଲେଖନ୍ତୁ..."></textarea>
+    
+    <div class="file-input-wrapper">
+        <label for="imageInput" class="file-label">🖼️ ଫଟୋ ଆଡ଼ କରନ୍ତୁ (Optional)</label>
+        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+    </div>
+    <img id="preview" alt="Preview">
+
     <button class="save-btn" onclick="addNote()">ନୋଟ୍ ସେଭ୍ କରନ୍ତୁ</button>
 
     <div class="notes-list" id="notesList"></div>
@@ -31,30 +47,63 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", loadNotes);
+    let selectedImageBase64 = "";
+
+    // Function to preview image after selection
+    function previewImage(event) {
+        let reader = new FileReader();
+        reader.onload = function() {
+            let preview = document.getElementById('preview');
+            preview.src = reader.result;
+            preview.style.display = 'block';
+            selectedImageBase64 = reader.result; // Store image in string format
+        }
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
 
     function addNote() {
         let input = document.getElementById("noteInput");
         let text = input.value.trim();
-        if (text === "") return alert("ଦୟାକରି କିଛି ଲେଖନ୍ତୁ!");
-
-        let notes = JSON.parse(localStorage.getItem("myNotes")) || [];
-        notes.push(text);
-        localStorage.setItem("myNotes", JSON.stringify(notes));
         
+        if (text === "" && selectedImageBase64 === "") {
+            return alert("ଦୟาକରି କିଛି ଲେଖନ୍ତୁ କିମ୍ବା ଫଟୋ ବାଛନ୍ତୁ!");
+        }
+
+        let notes = JSON.parse(localStorage.getItem("myPhotoNotes")) || [];
+        let newNote = {
+            text: text,
+            image: selectedImageBase64
+        };
+        
+        notes.push(newNote);
+        localStorage.setItem("myPhotoNotes", JSON.stringify(notes));
+        
+        // Reset Inputs
         input.value = "";
+        selectedImageBase64 = "";
+        document.getElementById('preview').style.display = 'none';
+        document.getElementById('imageInput').value = "";
+        
         displayNotes();
     }
 
     function displayNotes() {
         let notesList = document.getElementById("notesList");
         notesList.innerHTML = "";
-        let notes = JSON.parse(localStorage.getItem("myNotes")) || [];
+        let notes = JSON.parse(localStorage.getItem("myPhotoNotes")) || [];
 
         notes.forEach((note, index) => {
             let div = document.createElement("div");
             div.className = "note-item";
+            
+            let imgHTML = note.image ? `<img class="note-img" src="${note.image}">` : '';
+            let textHTML = note.text ? `<div class="note-text">${note.text}</div>` : '';
+
             div.innerHTML = `
-                <div class="note-text">${note}</div>
+                ${imgHTML}
+                ${textHTML}
                 <button class="delete-btn" onclick="deleteNote(${index})">🗑️ Delete (କାଟିଦିଅନ୍ତୁ)</button>
             `;
             notesList.appendChild(div);
@@ -63,9 +112,9 @@
 
     function deleteNote(index) {
         if(confirm("ଏହି ନୋଟ୍‌ଟିକୁ କାଟିବାକୁ ଚାହାଁନ୍ତି କି?")) {
-            let notes = JSON.parse(localStorage.getItem("myNotes")) || [];
+            let notes = JSON.parse(localStorage.getItem("myPhotoNotes")) || [];
             notes.splice(index, 1);
-            localStorage.setItem("myNotes", JSON.stringify(notes));
+            localStorage.setItem("myPhotoNotes", JSON.stringify(notes));
             displayNotes();
         }
     }
@@ -75,4 +124,3 @@
 
 </body>
 </html>
-
