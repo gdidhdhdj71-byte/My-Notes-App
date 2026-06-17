@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="or">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes App</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        textarea { width: 100%; height: 100px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; resize: none; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        .notes-list { margin-top: 20px; }
+        .note-item { background: #fff8dc; padding: 10px; margin-bottom: 10px; border-left: 5px solid #ffa500; border-radius: 3px; position: relative; word-wrap: break-word; }
+        .delete-btn { position: absolute; right: 10px; top: 10px; background: red; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 2px 5px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📝 ମୋର ନୋଟ୍ ଆପ୍</h2>
+    <textarea id="noteInput" placeholder="ଏଠାରେ ଆପଣଙ୍କର ନୋଟ୍ ଲେଖନ୍ତୁ..."></textarea>
+    <button onclick="addNote()">Save Note</button>
+
+    <div class="notes-list" id="notesList"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", loadNotes);
+
+    function addNote() {
+        let input = document.getElementById("noteInput");
+        let text = input.value.trim();
+        if (text === "") return alert("ଦୟାକରି କିଛି ଲେଖନ୍ତୁ!");
+
+        let notes = JSON.parse(localStorage.getItem("myNotes")) || [];
+        notes.push(text);
+        localStorage.setItem("myNotes", JSON.stringify(notes));
+        
+        input.value = "";
+        displayNotes();
+    }
+
+    function displayNotes() {
+        let notesList = document.getElementById("notesList");
+        notesList.innerHTML = "";
+        let notes = JSON.parse(localStorage.getItem("myNotes")) || [];
+
+        notes.forEach((note, index) => {
+            let div = document.createElement("div");
+            div.className = "note-item";
+            div.innerHTML = `${note} <button class="delete-btn" onclick="deleteNote(${index})">X</button>`;
+            notesList.appendChild(div);
+        });
+    }
+
+    function deleteNote(index) {
+        let notes = JSON.parse(localStorage.getItem("myNotes")) || [];
+        notes.splice(index, 1);
+        localStorage.setItem("myNotes", JSON.stringify(notes));
+        displayNotes();
+    }
+
+    function loadNotes() { displayNotes(); }
+</script>
+
+</body>
+</html>
