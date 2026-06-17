@@ -1,0 +1,45 @@
+name: Build Notes Android App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up NodeJS
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Cordova and Create Project
+      run: |
+        npm install -g cordova
+        cordova create notes-app com.mynotes.app MyNotes
+        cd notes-app
+        cordova platform add android
+        rm -rf www/*
+        cp ../index.html www/
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Build Android APK
+      run: |
+        cd notes-app
+        cordova build android --device
+
+    - name: Upload Notes APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Notes-App-APK
+        path: notes-app/platforms/android/app/build/outputs/apk/debug/*.apk
