@@ -1,45 +1,284 @@
-name: Build Notes Android App
+<!DOCTYPE html>
+<html lang="or">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samsung Notes Premium Clone</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #111111;
+            --text-sub: #757575;
+            --accent-color: #f27b13; /* Samsung Warm Orange */
+            --border-color: #e2e5e9;
+        }
 
-on:
-  push:
-    branches:
-      - main
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; padding: 0; color: var(--text-main);
+            -webkit-tap-highlight-color: transparent;
+        }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+        /* Samsung Header */
+        .header { padding: 30px 20px 10px 20px; background: var(--bg-color); }
+        .header h1 { font-size: 28px; font-weight: 700; margin: 0; }
+        .subtitle { font-size: 13px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
 
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+        /* Search Bar */
+        .search-container { padding: 0 20px 15px 20px; }
+        .search-bar {
+            width: 100%; padding: 12px 16px; background: #e8ebed;
+            border: none; border-radius: 20px; font-size: 15px; box-sizing: border-box;
+            outline: none; color: var(--text-main);
+        }
 
-    - name: Set up NodeJS
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+        /* Category Tabs */
+        .tabs { display: flex; gap: 15px; padding: 0 20px 15px 20px; overflow-x: auto; }
+        .tab { 
+            font-size: 14px; font-weight: 600; color: var(--text-sub); 
+            cursor: pointer; padding-bottom: 4px; border-bottom: 2px solid transparent;
+        }
+        .tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
 
-    - name: Install Cordova and Create Project
-      run: |
-        npm install -g cordova
-        cordova create notes-app com.mynotes.app MyNotes
-        cd notes-app
-        cordova platform add android
-        rm -rf www/*
-        cp ../index.html www/
+        .container { padding: 0 16px 100px 16px; }
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+        /* Notes Grid */
+        .notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .note-card {
+            background: var(--card-bg); border-radius: 16px; padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .note-card:active { transform: scale(0.98); }
+        .note-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+        .note-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; word-wrap: break-word; }
+        .note-desc { font-size: 14px; color: var(--text-sub); line-height: 1.4; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; flex-grow: 1; }
+        .note-date { font-size: 11px; color: var(--text-sub); margin-top: 10px; font-weight: 500; }
 
-    - name: Build Android APK
-      run: |
-        cd notes-app
-        cordova build android --device
+        /* Full Screen Editor Screen */
+        .editor-screen {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--card-bg); z-index: 1000; flex-direction: column;
+            animation: slideIn 0.25s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-    - name: Upload Notes APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: Notes-App-APK
-        path: notes-app/platforms/android/app/build/outputs/apk/debug/*.apk
+        .editor-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 20px; border-bottom: 1px solid var(--border-color);
+        }
+        .back-btn { font-size: 20px; background: none; border: none; cursor: pointer; padding: 5px; }
+        .save-btn { background: none; border: none; color: var(--accent-color); font-size: 16px; font-weight: 600; cursor: pointer; }
+        .delete-icon { background: none; border: none; color: #ff3b30; font-size: 16px; font-weight: 600; cursor: pointer; display: none; }
+
+        .editor-body { padding: 20px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .input-title { width: 100%; font-size: 22px; font-weight: 700; border: none; outline: none; margin-bottom: 15px; font-family: inherit; }
+        .input-desc { width: 100%; font-size: 16px; border: none; outline: none; resize: none; flex-grow: 1; font-family: inherit; line-height: 1.5; }
+        
+        /* Editor Image Preview */
+        #editorPreview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; display: none; }
+        
+        /* Bottom Toolbar in Editor */
+        .editor-toolbar { padding: 15px 20px; border-top: 1px solid var(--border-color); display: flex; gap: 20px; }
+        .toolbar-item { background: none; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; gap: 5px; color: var(--text-sub); font-weight: 500; }
+        #imageInput { display: none; }
+
+        /* Floating Plus Button */
+        .fab {
+            position: fixed; bottom: 30px; right: 24px; width: 56px; height: 56px;
+            background-color: var(--accent-color); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 28px;
+            box-shadow: 0 4px 12px rgba(242, 123, 19, 0.3); border: none; cursor: pointer; z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="mainScreen">
+        <div class="header">
+            <h1>Samsung Notes</h1>
+            <div class="subtitle" id="noteCount">୦ଟି ନୋଟ୍</div>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-bar" id="searchBar" placeholder="ଖୋଜନ୍ତୁ (Search)..." oninput="displayNotes()">
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" id="tabAll" onclick="switchTab('all')">ସବୁଯାକ</div>
+            <div class="tab" id="tabFav" onclick="switchTab('fav')">🖼️ ଫଟୋ ଥିବା ନୋଟ୍</div>
+        </div>
+
+        <div class="container">
+            <div class="notes-grid" id="notesGrid"></div>
+        </div>
+
+        <button class="fab" onclick="openEditor()">+</button>
+    </div>
+
+    <div class="editor-screen" id="editorScreen">
+        <div class="editor-header">
+            <button class="back-btn" onclick="closeEditor()">←</button>
+            <div style="display: flex; gap: 15px;">
+                <button class="delete-icon" id="deleteBtn" onclick="deleteNote()">🗑️ ଡିଲିଟ୍</button>
+                <button class="save-btn" onclick="saveNote()">ସେଭ୍</button>
+            </div>
+        </div>
+        <div class="editor-body">
+            <img id="editorPreview" alt="Image Preview">
+            <input type="text" class="input-title" id="noteTitle" placeholder="ଶୀର୍ଷକ (Title)">
+            <textarea class="input-desc" id="noteDesc" placeholder="ଏଠାରେ ଆପଣଙ୍କର ନୋଟ୍ ଲେଖନ୍ତୁ..."></textarea>
+        </div>
+        <div class="editor-toolbar">
+            <label for="imageInput" class="toolbar-item">🖼️ Image</label>
+            <input type="file" id="imageInput" accept="image/*" onchange="handleImage(event)">
+        </div>
+    </div>
+
+<script>
+    let notes = [];
+    let currentEditIndex = null;
+    let selectedImageBase64 = "";
+    let currentTab = 'all';
+
+    document.addEventListener("DOMContentLoaded", () => {
+        notes = JSON.parse(localStorage.getItem("samsungCloneNotes")) || [];
+        displayNotes();
+    });
+
+    function displayNotes() {
+        let grid = document.getElementById("notesGrid");
+        grid.innerHTML = "";
+        
+        let searchQuery = document.getElementById("searchBar").value.toLowerCase();
+        let filteredNotes = notes.filter(note => {
+            let matchesSearch = note.title.toLowerCase().includes(searchQuery) || note.text.toLowerCase().includes(searchQuery);
+            if (currentTab === 'fav') {
+                return matchesSearch && note.image !== "";
+            }
+            return matchesSearch;
+        });
+
+        document.getElementById("noteCount").innerText = filteredNotes.length + " ଟି ନୋଟ୍";
+
+        filteredNotes.forEach((note, index) => {
+            // Find real index in main array
+            let realIndex = notes.indexOf(note);
+            
+            let card = document.createElement("div");
+            card.className = "note-card";
+            card.onclick = () => openEditor(realIndex);
+            
+            let imgHTML = note.image ? `<img src="${note.image}">` : '';
+            let titleHTML = note.title ? `<div class="note-title">${note.title}</div>` : '';
+            let descHTML = note.text ? `<div class="note-desc">${note.text}</div>` : `<div class="note-desc" style="color:#b5b5b5;">No text</div>`;
+            
+            card.innerHTML = `
+                ${imgHTML}
+                ${titleHTML}
+                ${descHTML}
+                <div class="note-date">${note.date}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function openEditor(index = null) {
+        currentEditIndex = index;
+        document.getElementById("mainScreen").style.display = "none";
+        document.getElementById("editorScreen").style.display = "flex";
+
+        if (index !== null) {
+            // Edit Mode
+            document.getElementById("noteTitle").value = notes[index].title;
+            document.getElementById("noteDesc").value = notes[index].text;
+            document.getElementById("deleteBtn").style.display = "block";
+            if (notes[index].image) {
+                let prev = document.getElementById("editorPreview");
+                prev.src = notes[index].image;
+                prev.style.display = "block";
+                selectedImageBase64 = notes[index].image;
+            } else {
+                document.getElementById("editorPreview").style.display = "none";
+                selectedImageBase64 = "";
+            }
+        } else {
+            // New Note Mode
+            document.getElementById("noteTitle").value = "";
+            document.getElementById("noteDesc").value = "";
+            document.getElementById("deleteBtn").style.display = "none";
+            document.getElementById("editorPreview").style.display = "none";
+            selectedImageBase64 = "";
+        }
+    }
+
+    function closeEditor() {
+        document.getElementById("mainScreen").style.display = "block";
+        document.getElementById("editorScreen").style.display = "none";
+        document.getElementById("imageInput").value = "";
+    }
+
+    function handleImage(event) {
+        let reader = new FileReader();
+        reader.onload = function() {
+            let prev = document.getElementById("editorPreview");
+            prev.src = reader.result;
+            prev.style.display = "block";
+            selectedImageBase64 = reader.result;
+        }
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+
+    function saveNote() {
+        let title = document.getElementById("noteTitle").value.trim();
+        let text = document.getElementById("noteDesc").value.trim();
+
+        if (title === "" && text === "" && selectedImageBase64 === "") {
+            return alert("ଖାଲି ନୋଟ୍ ସେଭ୍ ହୋଇପାରିବ ନାହିଁ!");
+        }
+
+        let now = new Date();
+        let dateString = now.toLocaleDateString('or-IN', { day: 'numeric', month: 'short' }) + " " + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        let noteData = {
+            title: title || "ଶୀର୍ଷକ ବିହୀନ",
+            text: text,
+            image: selectedImageBase64,
+            date: dateString
+        };
+
+        if (currentEditIndex !== null) {
+            notes[currentEditIndex] = noteData;
+        } else {
+            notes.unshift(noteData); // Add new note to top
+        }
+
+        localStorage.setItem("samsungCloneNotes", JSON.stringify(notes));
+        closeEditor();
+        displayNotes();
+    }
+
+    function deleteNote() {
+        if (currentEditIndex !== null && confirm("ଏହି ନୋଟ୍‌ଟିକୁ ସମ୍ପୂର୍ଣ୍ଣ କାଟିଦେବାକୁ ଚାହାଁନ୍ତି କି?")) {
+            notes.splice(currentEditIndex, 1);
+            localStorage.setItem("samsungCloneNotes", JSON.stringify(notes));
+            closeEditor();
+            displayNotes();
+        }
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById("tabAll").classList.toggle("active", tab === 'all');
+        document.getElementById("tabFav").classList.toggle("active", tab === 'fav');
+        displayNotes();
+    }
+</script>
+
+</body>
+</html>
