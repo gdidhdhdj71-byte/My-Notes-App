@@ -3,357 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samsung Notes Book Style</title>
+    <title>Zero Cache Cleaner Clone</title>
     <style>
         :root {
-            --bg-dark: #000000;          /* Pure black background like screenshot */
-            --card-border: #2c2c2c;
+            --bg-color: #0b0e14;
+            --card-bg: #161b22;
+            --accent-blue: #007aff;
+            --accent-green: #34c759;
             --text-white: #ffffff;
-            --text-grey: #8e8e93;
-            --accent-orange: #f27b13;
+            --text-grey: #8b949e;
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg-dark); 
-            margin: 0; padding: 0; color: var(--text-white);
-            -webkit-tap-highlight-color: transparent;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Top Bar Style */
-        .top-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 20px 10px 20px;
+        /* Header */
+        .header {
+            width: 100%; padding: 25px 20px;
+            box-sizing: border-box; text-align: center;
+            border-bottom: 1px solid #21262d;
         }
-        .top-bar .left-section { display: flex; align-items: center; gap: 15px; }
-        .top-bar h1 { font-size: 22px; font-weight: 600; margin: 0; }
-        .menu-icon { font-size: 22px; cursor: pointer; }
-        .right-icons { display: flex; gap: 20px; font-size: 20px; cursor: pointer; }
+        .header h1 { font-size: 22px; margin: 0; font-weight: 600; color: var(--accent-blue); }
+        .header p { font-size: 13px; color: var(--text-grey); margin: 5px 0 0 0; }
 
-        /* Timeline Section (Months) */
-        .section-title {
-            font-size: 13px; color: var(--text-grey);
-            padding: 15px 20px 10px 20px; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 0.5px;
+        /* Dashboard Circle */
+        .circle-container {
+            margin: 40px 0; position: relative;
+            width: 200px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .container { padding: 0 16px 100px 16px; }
-
-        /* Notes Grid */
-        .notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-
-        /* 📔 SAMSUNG REAL BOOK SHAPE CARD 📔 */
-        .book-card {
-            display: flex; flex-direction: column; cursor: pointer;
-            position: relative; transition: transform 0.2s;
+        .outer-circle {
+            width: 100%; height: 100%;
+            border-radius: 50%; border: 6px dashed #21262d;
+            position: absolute; animation: rotate 10s linear infinite;
         }
-        .book-card:active { transform: scale(0.96); }
-
-        /* The Book Cover */
-        .book-cover {
-            width: 100%; aspect-ratio: 1 / 1; /* Makes it perfect square */
-            background: #ffffff; border-radius: 12px;
-            position: relative; box-shadow: 0 4px 15px rgba(255,255,255,0.05);
-            overflow: hidden; border: 1px solid var(--card-border);
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-
-        /* Book Spine / Binding Left Line */
-        .book-spine {
-            position: absolute; left: 0; top: 0; bottom: 0;
-            width: 8px; background: rgba(0, 0, 0, 0.08);
-            border-right: 1px solid rgba(0, 0, 0, 0.05);
-            z-index: 2;
-        }
-
-        /* Inside Book Image / Content Preview */
-        .book-preview-img {
-            width: 100%; height: 100%; object-fit: cover;
-            position: absolute; top:0; left:0; z-index: 1;
-        }
-
-        /* Samsung Style Corner Tag inside Book */
-        .book-tag {
-            position: absolute; top: 12px; right: 12px;
-            width: 45px; height: 32px; border-radius: 16px;
-            background: #fff5e6; display: flex; align-items: center; justify-content: center;
-            font-size: 18px; z-index: 3; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        /* Lock Icon Overlay for private notes */
-        .lock-overlay {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            background: #242426; z-index: 4; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; font-size: 24px;
-        }
-
-        /* Book Info Details Below Cover */
-        .book-title {
-            font-size: 14px; font-weight: 500; color: var(--text-white);
-            margin: 8px 4px 2px 4px; text-align: left;
-            word-wrap: break-word; display: -webkit-box;
-            -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-        }
-        .book-date { font-size: 11px; color: var(--text-grey); margin-left: 4px; }
-
-        /* Full Screen Editor Screen */
-        .editor-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #121212; z-index: 1000; flex-direction: column;
-        }
-        .editor-header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 20px; border-bottom: 1px solid #222;
-        }
-        .back-btn { font-size: 22px; background: none; border: none; color: white; cursor: pointer; }
-        .save-btn { background: none; border: none; color: var(--accent-orange); font-size: 16px; font-weight: 600; cursor: pointer; }
-        .delete-btn { background: none; border: none; color: #ff3b30; font-size: 16px; cursor: pointer; display: none; }
-
-        .editor-body { padding: 20px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
-        .input-title { width: 100%; font-size: 22px; font-weight: 700; border: none; outline: none; margin-bottom: 15px; font-family: inherit; background: none; color: white; }
-        .input-desc { width: 100%; font-size: 16px; border: none; outline: none; resize: none; flex-grow: 1; font-family: inherit; line-height: 1.5; background: none; color: #ccc; }
-        #editorPreview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; display: none; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        .editor-toolbar { padding: 15px 20px; border-top: 1px solid #222; display: flex; gap: 20px; background: #1a1a1a; }
-        .toolbar-item { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text-grey); font-weight: 500; }
-        #imageInput { display: none; }
-
-        /* 🖊️ SAMSUNG EXACT PEN FAB BUTTON 🖊️ */
-        .fab {
-            position: fixed; bottom: 30px; right: 24px; width: 56px; height: 56px;
-            background-color: #2c2c2e; color: var(--text-white); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 22px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: none; cursor: pointer; z-index: 999;
+        .inner-content {
+            text-align: center; z-index: 2;
         }
+        .cache-size { font-size: 36px; font-weight: 700; color: var(--text-white); }
+        .cache-unit { font-size: 14px; color: var(--text-grey); }
+
+        /* Stats Card */
+        .stats-container {
+            width: 90%; background: var(--card-bg);
+            border-radius: 16px; padding: 20px;
+            box-sizing: border-box; margin-bottom: 30px;
+            border: 1px solid #30363d;
+        }
+        .stat-row {
+            display: flex; justify-content: space-between; margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .stat-row:last-child { margin-bottom: 0; }
+        .stat-label { color: var(--text-grey); }
+        .stat-value { font-weight: 600; }
+
+        /* Clean Button */
+        .clean-btn {
+            width: 85%; padding: 16px;
+            background: linear-gradient(135deg, #007aff, #0056b3);
+            border: none; border-radius: 25px;
+            color: white; font-size: 16px; font-weight: 600;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+            transition: 0.2s; text-align: center;
+        }
+        .clean-btn:active { transform: scale(0.98); }
+
+        /* Scanning Overlay Animation */
+        .scanning-text {
+            display: none; font-size: 16px; color: var(--accent-green);
+            margin-top: 15px; font-weight: 500;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
-    <div id="mainScreen">
-        <div class="top-bar">
-            <div class="left-section">
-                <div class="menu-icon">☰</div>
-                <h1>All notes</h1>
-            </div>
-            <div class="right-icons">
-                <span>📄⁺</span>
-                <span>🔍</span>
-                <span>⋮</span>
-            </div>
-        </div>
-
-        <div class="section-title" id="favHeader">Favourites ⭐</div>
-        <div class="container">
-            <div class="notes-grid" id="favGrid"></div>
-        </div>
-
-        <div class="section-title" id="recentHeader">Recent Notes</div>
-        <div class="container">
-            <div class="notes-grid" id="recentGrid"></div>
-        </div>
-
-        <button class="fab" onclick="openEditor()">📝</button>
+    <div class="header">
+        <h1>Zero Cleaner Clone</h1>
+        <p>Automated Cache Optimizer</p>
     </div>
 
-    <div class="editor-screen" id="editorScreen">
-        <div class="editor-header">
-            <button class="back-btn" onclick="closeEditor()">←</button>
-            <div style="display: flex; gap: 15px;">
-                <button class="delete-btn" id="deleteBtn" onclick="deleteNote()">🗑️ Delete</button>
-                <button class="save-btn" onclick="saveNote()">Save</button>
-            </div>
-        </div>
-        <div class="editor-body">
-            <img id="editorPreview" alt="Preview">
-            <input type="text" class="input-title" id="noteTitle" placeholder="Title">
-            <textarea class="input-desc" id="noteDesc" placeholder="Start writing..."></textarea>
-        </div>
-        <div class="editor-toolbar">
-            <label for="imageInput" class="toolbar-item">🖼️ Add Image</label>
-            <input type="file" id="imageInput" accept="image/*" onchange="handleImage(event)">
-            <button class="toolbar-item" onclick="toggleLock()" style="margin-left: auto;" id="lockToolbarBtn">🔓 Lock</button>
+    <div class="circle-container">
+        <div class="outer-circle" id="circleBorder"></div>
+        <div class="inner-content">
+            <div class="cache-size" id="cacheDisplay">42.8</div>
+            <div class="cache-unit" id="unitDisplay">MB Junk Found</div>
         </div>
     </div>
+
+    <div class="stats-container">
+        <div class="stat-row">
+            <div class="stat-label">System Cache Status</div>
+            <div class="stat-value" id="statusText" style="color: #ff453a;">Heavy Junk</div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-label">Apps Analyzed</div>
+            <div class="stat-value">24 Apps</div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-label">Last Cleaned</div>
+            <div class="stat-value" id="lastCleanTime">Never</div>
+        </div>
+    </div>
+
+    <button class="clean-btn" id="cleanBtn" onclick="startCleaning()">ONE-TAP CLEAR CACHE</button>
+    <div class="scanning-text" id="scanText">Scanning & Clearing App Cache...</div>
 
 <script>
-    let notes = [];
-    let currentEditIndex = null;
-    let selectedImageBase64 = "";
-    let isCurrentNoteLocked = false;
-
-    // Default book cover backgrounds for premium feel
-    const coverColors = ["#dfebf7", "#fdecd2", "#f7dfdf", "#e3dff7", "#e2f7df"];
-
+    // Generate a random junk size on load to look realistic
     document.addEventListener("DOMContentLoaded", () => {
-        notes = JSON.parse(localStorage.getItem("samsungBookNotes")) || [];
-        displayNotes();
+        if(localStorage.getItem("isCleaned") === "true") {
+            setCleanState();
+        } else {
+            let randomJunk = (Math.random() * (75 - 20) + 20).toFixed(1);
+            document.getElementById("cacheDisplay").innerText = randomJunk;
+        }
+        
+        let lastTime = localStorage.getItem("lastCleanDate");
+        if(lastTime) document.getElementById("lastCleanTime").innerText = lastTime;
     });
 
-    function displayNotes() {
-        let favGrid = document.getElementById("favGrid");
-        let recentGrid = document.getElementById("recentGrid");
-        
-        favGrid.innerHTML = "";
-        recentGrid.innerHTML = "";
+    function startCleaning() {
+        let btn = document.getElementById("cleanBtn");
+        let scanText = document.getElementById("scanText");
+        let border = document.getElementById("circleBorder");
 
-        let favCount = 0;
-        let recentCount = 0;
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+        scanText.style.display = "block";
+        border.style.borderColor = var(--accent-green);
+        border.style.animationDuration = "2s"; // Speed up rotation during scan
 
-        notes.forEach((note, index) => {
-            let card = document.createElement("div");
-            card.className = "book-card";
-            card.onclick = () => handleCardClick(index);
-
-            // Setup cover styling
-            let coverBg = note.coverColor || coverColors[index % coverColors.length];
-            let innerHTML = `
-                <div class="book-cover" style="background: ${note.image ? '#fff' : coverBg};">
-                    <div class="book-spine"></div>
-            `;
-
-            if (note.isLocked) {
-                innerHTML += `<div class="lock-overlay">🔒</div>`;
-            } else {
-                if (note.image) {
-                    innerHTML += `<img class="book-preview-img" src="${note.image}">`;
-                }
-                // Custom Icon Tag inside book like real Samsung notes
-                let tagIcon = note.image ? "🖼️" : "💼";
-                innerHTML += `<div class="book-tag">${tagIcon}</div>`;
+        // Simulate scanning apps one by one like Zero Cleaner
+        let currentSize = parseFloat(document.getElementById("cacheDisplay").innerText);
+        let interval = setInterval(() => {
+            if(currentSize > 0) {
+                currentSize -= (Math.random() * 5).toFixed(1);
+                if(currentSize < 0) currentSize = 0;
+                document.getElementById("cacheDisplay").innerText = currentSize.toFixed(1);
             }
+        }, 200);
 
-            innerHTML += `
-                </div>
-                <div class="book-title">${note.isLocked ? "Locked Note" : (note.title || "Untitled")}</div>
-                <div class="book-date">${note.date}</div>
-            `;
-            card.innerHTML = innerHTML;
-
-            // Sort into Favourites or Recent
-            if (note.image && favCount < 2) { 
-                favGrid.appendChild(card);
-                favCount++;
-            } else {
-                recentGrid.appendChild(card);
-                recentCount++;
-            }
-        });
-
-        // Hide headers if empty
-        document.getElementById("favHeader").style.display = favCount > 0 ? "block" : "none";
-        document.getElementById("recentHeader").style.display = recentCount > 0 ? "block" : "none";
-    }
-
-    function handleCardClick(index) {
-        if (notes[index].isLocked) {
-            let pin = prompt("Enter Note PIN to unlock (Default: 1234):");
-            if (pin !== "1234") {
-                return alert("Wrong PIN! Access Denied.");
-            }
-        }
-        openEditor(index);
-    }
-
-    function openEditor(index = null) {
-        currentEditIndex = index;
-        document.getElementById("mainScreen").style.display = "none";
-        document.getElementById("editorScreen").style.display = "flex";
-
-        if (index !== null) {
-            document.getElementById("noteTitle").value = notes[index].title;
-            document.getElementById("noteDesc").value = notes[index].text;
-            document.getElementById("deleteBtn").style.display = "block";
-            isCurrentNoteLocked = notes[index].isLocked || false;
+        setTimeout(() => {
+            clearInterval(interval);
             
-            if (notes[index].image) {
-                let prev = document.getElementById("editorPreview");
-                prev.src = notes[index].image;
-                prev.style.display = "block";
-                selectedImageBase64 = notes[index].image;
-            } else {
-                document.getElementById("editorPreview").style.display = "none";
-                selectedImageBase64 = "";
-            }
-        } else {
-            document.getElementById("noteTitle").value = "";
-            document.getElementById("noteDesc").value = "";
-            document.getElementById("deleteBtn").style.display = "none";
-            document.getElementById("editorPreview").style.display = "none";
-            selectedImageBase64 = "";
-            isCurrentNoteLocked = false;
-        }
-        updateLockToolbarButton();
+            // Clear App Local Storage Cache
+            localStorage.clear();
+            
+            // Update UI to Clean state
+            setCleanState();
+
+            // Save state
+            let now = new Date();
+            let timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            localStorage.setItem("isCleaned", "true");
+            localStorage.setItem("lastCleanDate", "Today, " + timeString);
+            
+            document.getElementById("lastCleanTime").innerText = "Today, " + timeString;
+            alert("Cache Optimized successfully! App storage is free.");
+        }, 4000); // 4 Seconds scanning animation
     }
 
-    function closeEditor() {
-        document.getElementById("mainScreen").style.display = "block";
-        document.getElementById("editorScreen").style.display = "none";
-        document.getElementById("imageInput").value = "";
-    }
+    function setCleanState() {
+        document.getElementById("cacheDisplay").innerText = "0.0";
+        document.getElementById("unitDisplay").innerText = "KB Cache Data";
+        document.getElementById("statusText").innerText = "Excellent";
+        document.getElementById("statusText").style.color = "#34c759";
+        document.getElementById("scanText").style.display = "none";
+        
+        let btn = document.getElementById("cleanBtn");
+        btn.innerText = "SYSTEM OPTIMIZED";
+        btn.style.background = "#21262d";
+        btn.style.color = "#8b949e";
+        btn.style.boxShadow = "none";
+        btn.disabled = true;
 
-    function handleImage(event) {
-        let reader = new FileReader();
-        reader.onload = function() {
-            let prev = document.getElementById("editorPreview");
-            prev.src = reader.result;
-            prev.style.display = "block";
-            selectedImageBase64 = reader.result;
-        }
-        if(event.target.files[0]) {
-            reader.readAsDataURL(event.target.files[0]);
-        }
-    }
-
-    function toggleLock() {
-        isCurrentNoteLocked = !isCurrentNoteLocked;
-        if(isCurrentNoteLocked) alert("Note locked! Passcode is 1234");
-        updateLockToolbarButton();
-    }
-
-    function updateLockToolbarButton() {
-        document.getElementById("lockToolbarBtn").innerText = isCurrentNoteLocked ? "🔒 Locked" : "🔓 Lock";
-    }
-
-    function saveNote() {
-        let title = document.getElementById("noteTitle").value.trim();
-        let text = document.getElementById("noteDesc").value.trim();
-
-        if (title === "" && text === "" && selectedImageBase64 === "") {
-            return alert("Cannot save an empty note!");
-        }
-
-        let now = new Date();
-        let dateString = now.getDate() + " " + now.toLocaleString('en-US', { month: 'short' });
-
-        let randomColor = coverColors[Math.floor(Math.random() * coverColors.length)];
-
-        let noteData = {
-            title: title,
-            text: text,
-            image: selectedImageBase64,
-            date: dateString,
-            isLocked: isCurrentNoteLocked,
-            coverColor: currentEditIndex !== null ? notes[currentEditIndex].coverColor : randomColor
-        };
-
-        if (currentEditIndex !== null) {
-            notes[currentEditIndex] = noteData;
-        } else {
-            notes.unshift(noteData);
-        }
-
-        localStorage.setItem("samsungBookNotes", JSON.stringify(notes));
-        closeEditor();
-        displayNotes();
-    }
-
-    function deleteNote() {
-        if (currentEditIndex !== null && confirm("Delete this note permanently?")) {
-            notes.splice(currentEditIndex, 1);
-            localStorage.setItem("samsungBookNotes", JSON.stringify(notes));
-            closeEditor();
-            displayNotes();
-        }
+        let border = document.getElementById("circleBorder");
+        border.style.borderColor = "#34c759";
+        border.style.animation = "none";
     }
 </script>
 
